@@ -4,8 +4,6 @@ import time
 #from termcolor import colored
 from abc import ABC, abstractmethod
 
-#colorise.cprint(self.__nombre, fg="green")
-
 # Definir códigos de escape ANSI para colores
 RED = "\033[31m"
 GREEN = "\033[32m"
@@ -15,7 +13,7 @@ YELLOW = '\033[0;33m'
 GRIS = '\033[37m'
 
 
-class Intentos(ABC):
+class Gestion(ABC):
     
     @abstractmethod #Hace que todas las clases que hereden de esta clase OBLIGATORIAMENTE tienen que tener defina este metodo
     def IntentosPrevios(self):
@@ -26,7 +24,7 @@ class Intentos(ABC):
         pass
 
 
-class Retroalimentacion(Intentos):
+class Retroalimentacion(Gestion):
     def __init__(self, tabla: list) -> None:
         self.__tabla = tabla
         self.__attempts = 0
@@ -58,30 +56,16 @@ class Retroalimentacion(Intentos):
                 array1[i] = array1[i].replace(array1[i], f"{GREEN}{array1[i]}{RESET}")
             for letra in array2:
                 if array1[i] == letra :
-                    array1[i] = array1[i].replace(array1[i], f"{YELLOW}{array1[i]}{RESET}")
-                    
+                    array1[i] = array1[i].replace(array1[i], f"{YELLOW}{array1[i]}{RESET}")     
+
         Fila = self.IntentosPrevios()
-        #self.tabla.insert(Fila,array1) 
-
-        try:
-            self.tabla[Fila] = array1 #Sobreescribe la fila por el array modificado.
-            self.ActualizarDatos(self.tabla)
-            return self.tabla
-        except:
-            print("Te quedaste sin intentos mi rey...")   
+        self.tabla[Fila] = array1 #Sobreescribe la fila por el array modificado.
+        self.ActualizarDatos(self.tabla)
+        return self.tabla
             
 
-        
-
-        # for p in range(len(tablero[0])):
-        #     if p == 0:
-        #         tablero[0][p] = tablero[0][p].replace("☻", f"{RED}x{RESET}")
-        
-        # for k in tablero[0]:
-        #     print(k)
-            
     def IntentosPrevios(self):
-        if self.attempts == 12:
+        if self.attempts == 5:
             pass     
         else:
             return self.attempts
@@ -126,33 +110,38 @@ class Tablero(): #Aqui voy a verificar los ganes y errores
     def TablaMaquina(self):
         
         pass
-
+    
     def TablaJugador(self):
         palabraElegida = "a"
         while len(palabraElegida) != len(self.palabra):
             colorise.cprint(f"La palabra tiene {len(self.palabra)} letras.",fg="green")
-            palabraElegida = input("¿Con cual palabra va a intentar adivinar?").lower().strip()
+            palabraElegida = input("¿Con cual palabra va a intentar adivinar?: ").lower().strip()
 
             if len(palabraElegida) != len(self.palabra):
                 colorise.cprint("Fuera del rango de la palabra, ingrese algo valido...\n", fg="red")
 
         NuevaTabla = self.feedback.Feedback(self.palabra, palabraElegida )
-        self.MostrarTablero(NuevaTabla) 
-        self.WinVerific(palabraElegida, self.palabra) #cositas
+
+        if NuevaTabla != False:
+            self.MostrarTablero(NuevaTabla) #cositas
+            self.WinVerific(palabraElegida, self.palabra) #cositas
 
 
     def WinVerific(self, Intento, palabra ):
         if Intento == palabra:
-            colorise.cprint("!Descubriste la palabra!\n", fg="green")
-        else:
+            colorise.cprint("\n!Descubriste la palabra!\n", fg="green")
+
+        elif self.feedback.attempts != 5:
             colorise.cprint("!El juego sigue!\n", fg="blue")
             self.TablaJugador()
-
+        else:
+            colorise.cprint("!Fin del juego!\n", fg="blue")
+            colorise.cprint(f"La palabra es: {palabra}\n", fg="yellow")
 
     def MostrarTablero(self, TableroActual):
-        for fila in TableroActual:
+        for fila in TableroActual: #cositas
             print("", end="     ")
-            time.sleep(0.2)
+            time.sleep(0.1)
             print("    ".join(fila))
 
 
@@ -187,23 +176,33 @@ class Roles():
     def Adivinador(self):
         palabrasAdivinar = ["casa","celular","cuaderno","maduro","biden","python"]
         chose = random.choice(palabrasAdivinar)
-        return chose
+        
+        tablero = self.TableroBase(len(chose))
+        retro = Retroalimentacion(tablero)
+        objtTablero = Tablero(self.nombre, chose, retro)
+        objtTablero.TablaJugador() 
+
 
     def Creador(self):
         print(f"¡Hola {self.__nombre}!")
-        print("¿En que palabra piensa a adivinar? :")
+        print("¿Cual palabra va a adivinar? :")
         word = input().lower().strip()
         validar = self.ValidarPalabra(word) 
         if validar:
-            tablero = [["☻" for _ in range(0,len(word))] for _ in range(0,12)] #Creacion de tablero base.
-
+            tablero = self.TableroBase(len(word))
             retro = Retroalimentacion(tablero)
             objtTablero = Tablero(self.nombre, word, retro)
-            objtTablero.TablaJugador()
+            objtTablero.TablaJugador() #cositas
+
+
+
+    def TableroBase(self, key):
+        tablero = [["☻" for _ in range(0,key)] for _ in range(0,5)] 
+        return tablero
+
 
 
     def ValidarPalabra(self, word: str):
-        
         if word.isalpha() != True:
             colorise.cprint("Palabra invalida. Vuelva a intentar...\n", fg="blue")
             self.Creador()
@@ -213,24 +212,26 @@ class Roles():
 
 def main():
 
-    Rol = 0
-    while Rol != 1 or Rol != 2:
-
-        print("\n¿Que rol quiere elegir?´\n1: Adivinador\n2: Creador\n")
+    Nombre = input("¿Cual es su nombre?: ").strip()
+    while True:
+        print("\nMenu: \n1: Adivinador.\n2: Creador.\n3: 1vs1.\n4: Salir.")
         Rol = int(input())
 
-        if Rol == 1 or Rol == 2:
+        if Rol == 1:
+            objRol = Roles(nombre=Nombre, rol=Rol)
+            objRol.Adivinador()
+        elif Rol == 2:
+            objRol = Roles(nombre=Nombre, rol=Rol)
+            objRol.Creador()
+        elif Rol == 3:
+            pass
+        elif Rol == 4:
+            print("Hasta luego.")
             break
         else:
             print("Opcion invalida...\n")
 
-    Nombre = input("¿Cual es su nombre?: \n").strip()
-
-    objRol = Roles(nombre=Nombre, rol=Rol)
-
-    objRol.Creador()
-
-
+        
 
 if __name__ == "__main__":
     main()
@@ -290,3 +291,4 @@ tablero.insert(0,array1)
 #     print("    ".join(k))
 
 #strip elimina los espacios al principio y al final.
+
