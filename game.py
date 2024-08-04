@@ -106,12 +106,31 @@ class Tablero(): #Aqui voy a verificar los ganes y errores
     @palabra.setter
     def palabra(self, palabra:str):
         self.__palabra = palabra
+
+    def generar_palabra_aleatoria(self, lista_palabras):
+
+        palabraAleatoria = "a"
+        while len(palabraAleatoria) != len(self.palabra):
+            palabraAleatoria = random.choice(lista_palabras)
+            
+        return palabraAleatoria
+            
     
-    def TablaMaquina(self):
-        
-        pass
+    def TablaMaquina(self, rol):
+
+        #while self.feedback.attempts != 5:
+            with open("palabras.txt", "r", encoding="utf-8") as archivo:
+                palabras = [linea.strip() for linea in archivo]
+            
+            palabra_generada = self.generar_palabra_aleatoria(palabras)
+            NuevaTabla = self.feedback.Feedback(self.palabra, palabra_generada)
+
+            if NuevaTabla != False:
+                self.MostrarTablero(NuevaTabla) #cositas
+                self.WinVerific(palabra_generada, self.palabra, rol) #cositas
     
-    def TablaJugador(self):
+    
+    def TablaJugador(self, rol):
         palabraElegida = "a"
         while len(palabraElegida) != len(self.palabra):
             colorise.cprint(f"La palabra tiene {len(self.palabra)} letras.",fg="green")
@@ -124,19 +143,25 @@ class Tablero(): #Aqui voy a verificar los ganes y errores
 
         if NuevaTabla != False:
             self.MostrarTablero(NuevaTabla) #cositas
-            self.WinVerific(palabraElegida, self.palabra) #cositas
+            self.WinVerific(palabraElegida, self.palabra, rol) #cositas
 
 
-    def WinVerific(self, Intento, palabra ):
+    def WinVerific(self, Intento, palabra, rol):
         if Intento == palabra:
             colorise.cprint("\n!Descubriste la palabra!\n", fg="green")
 
         elif self.feedback.attempts != 5:
             colorise.cprint("!El juego sigue!\n", fg="blue")
-            self.TablaJugador()
+
+            if rol == 1 or rol == 3:
+                self.TablaJugador(rol)
+            else:
+                time.sleep(1.5)
+                self.TablaMaquina(rol)
         else:
             colorise.cprint("!Fin del juego!\n", fg="blue")
             colorise.cprint(f"La palabra es: {palabra}\n", fg="yellow")
+
 
     def MostrarTablero(self, TableroActual):
         for fila in TableroActual: #cositas
@@ -180,10 +205,11 @@ class Roles():
         tablero = self.TableroBase(len(chose))
         retro = Retroalimentacion(tablero)
         objtTablero = Tablero(self.nombre, chose, retro)
-        objtTablero.TablaJugador() 
+        objtTablero.TablaJugador(self.rol) 
 
 
     def Creador(self):
+        
         print(f"¡Hola {self.__nombre}!")
         print("¿Cual palabra va a adivinar? :")
         word = input().lower().strip()
@@ -192,14 +218,14 @@ class Roles():
             tablero = self.TableroBase(len(word))
             retro = Retroalimentacion(tablero)
             objtTablero = Tablero(self.nombre, word, retro)
-            objtTablero.TablaJugador() #cositas
-
-
+            if self.rol == 2:
+                objtTablero.TablaMaquina(self.rol)
+            else:
+                objtTablero.TablaJugador(self.rol) #cosita
 
     def TableroBase(self, key):
         tablero = [["☻" for _ in range(0,key)] for _ in range(0,5)] 
         return tablero
-
 
 
     def ValidarPalabra(self, word: str):
@@ -219,12 +245,13 @@ def main():
 
         if Rol == 1:
             objRol = Roles(nombre=Nombre, rol=Rol)
-            objRol.Adivinador()
+            objRol.Adivinador() 
         elif Rol == 2:
             objRol = Roles(nombre=Nombre, rol=Rol)
-            objRol.Creador()
+            objRol.Creador() #Diferenciar entre metodos
         elif Rol == 3:
-            pass
+            objRol = Roles(nombre=Nombre, rol=Rol)
+            objRol.Creador()
         elif Rol == 4:
             print("Hasta luego.")
             break
@@ -232,7 +259,6 @@ def main():
             print("Opcion invalida...\n")
 
         
-
 if __name__ == "__main__":
     main()
 
@@ -283,7 +309,7 @@ array2 = [a for a in palabraDescubrir]
 #     if array1[o] == array2[o]:
 #         # print(f"La letra es {array2[o]} y el indice es {o}")
 #         array1[o] =array1[o].replace(array1[o], f"{GREEN}{array1[o]}{RESET}")
-tablero.insert(0,array1)
+
 
 # for k in tablero:
 #     print("", end="     ")
@@ -291,4 +317,5 @@ tablero.insert(0,array1)
 #     print("    ".join(k))
 
 #strip elimina los espacios al principio y al final.
+
 
