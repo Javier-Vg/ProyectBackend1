@@ -4,14 +4,6 @@ import time
 #from termcolor import colored
 from abc import ABC, abstractmethod
 
-# Definir códigos de escape ANSI para colores
-RED = "\033[31m"
-GREEN = "\033[32m"
-BLUE = "\033[34m"
-RESET = "\033[0m"
-YELLOW = '\033[0;33m'
-GRIS = '\033[37m'
-
 
 class Gestion(ABC):
     
@@ -23,11 +15,14 @@ class Gestion(ABC):
     def ActualizarDatos(self):
         pass
 
-
 class Retroalimentacion(Gestion):
     def __init__(self, tabla: list) -> None:
+        self.__validar_tipo(tabla, list)
         self.__tabla = tabla
         self.__attempts = 0
+        self.__green = "\033[32m"    #Codigos ANSI
+        self.__reset = "\033[0m"
+        self.__yellow = '\033[0;33m'
 
     @property
     def tabla(self):
@@ -36,6 +31,18 @@ class Retroalimentacion(Gestion):
     @property
     def attempts(self):
         return self.__attempts
+
+    @property
+    def green(self):
+        return self.__green
+    
+    @property
+    def yellow(self):
+        return self.__yellow
+    
+    @property
+    def reset(self):
+        return self.__reset
     
     @attempts.setter
     def attempts(self, attempts:str):
@@ -44,6 +51,10 @@ class Retroalimentacion(Gestion):
     @tabla.setter
     def tabla(self, tabla:list):
         self.__tabla = tabla
+        
+    def __validar_tipo(self, elemento, tipo): #Valida si es de tipo de dato correcto
+        if not isinstance(elemento, tipo):
+            raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
 
     def Feedback(self, palabraDescubrir: str, intento: str): #Metodo que recibe la palabra a buscar y la palabra que ingreso para adivinar.
 
@@ -54,17 +65,16 @@ class Retroalimentacion(Gestion):
         #Inicia la comparativa de las palabras y asignando el color correspondiente, usando los codigos ANSI.
         for i in range(len(array1)):
             if array1[i] == array2[i]:
-                array1[i] = array1[i].replace(array1[i], f"{GREEN}{array1[i]}{RESET}") #
+                array1[i] = array1[i].replace(array1[i], f"{self.green}{array1[i]}{self.reset}") #
             for letra in array2:
                 if array1[i] == letra :
-                    array1[i] = array1[i].replace(array1[i], f"{YELLOW}{array1[i]}{RESET}")     
+                    array1[i] = array1[i].replace(array1[i], f"{self.yellow}{array1[i]}{self.reset}")     
 
         Fila = self.IntentosPrevios()
         self.tabla[Fila] = array1 #Sobreescribe la fila por el array modificado.
         self.ActualizarDatos(self.tabla)
         return self.tabla
             
-
     def IntentosPrevios(self): #Metodo que devuelve el intento o por el contrario, no lo manda, ya que terminaron los intentos.
         if self.attempts == 12:
             pass     
@@ -75,10 +85,12 @@ class Retroalimentacion(Gestion):
         self.attempts += 1
         self.tabla = TablaModificada
 
-
 class Tablero(): #Clase que contiene los procesos de los intentos dentro de la tabla.
 
     def __init__(self, nombre: str, palabra: str, feedback: Retroalimentacion) -> None: #Metodo constructor
+        self.__validar_tipo(nombre, str)
+        self.__validar_tipo(palabra, str)
+        self.__validar_tipo(feedback, Retroalimentacion)
         self.__nombre = nombre
         self.__palabra = palabra
         self.__feedback = feedback
@@ -107,6 +119,10 @@ class Tablero(): #Clase que contiene los procesos de los intentos dentro de la t
     @palabra.setter
     def palabra(self, palabra:str):
         self.__palabra = palabra
+        
+    def __validar_tipo(self, elemento, tipo): #Valida si es de tipo de dato correcto
+        if not isinstance(elemento, tipo):
+            raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
 
     def generar_palabra_aleatoria(self, lista_palabras: list): #Metodo que retorna una palabra random de un array de palabras, que es recibido como parametro.
 
@@ -129,10 +145,9 @@ class Tablero(): #Clase que contiene los procesos de los intentos dentro de la t
             self.MostrarTablero(NuevaTabla) #Se llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
             self.WinVerific(palabra_generada, self.palabra, rol) 
     
-    
     def TablaJugador(self, rol:int): #Metodo que pide al usuario imgresar una palabra para usarla como intento.
         palabraElegida = "a"
-        while len(palabraElegida) != len(self.palabra): #Repite si la longitud de las plabras son diferentes.
+        while len(palabraElegida) != len(self.palabra): #Se encicla si la longitud de las plabras son diferentes.
             colorise.cprint(f"La palabra tiene {len(self.palabra)} letras.",fg="green")
             palabraElegida = input("¿Con cual palabra va a intentar adivinar?: ").lower().strip()
 
@@ -145,11 +160,11 @@ class Tablero(): #Clase que contiene los procesos de los intentos dentro de la t
             self.MostrarTablero(NuevaTabla)  #Se llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
             self.WinVerific(palabraElegida, self.palabra, rol)
 
-    def WinVerific(self, Intento, palabra, rol): #Metodo que verifica si la palabra es igual o diferente a la palabra a adivinar.
+    def WinVerific(self, Intento:int, palabra:str, rol:int): #Metodo que verifica si la palabra es igual o diferente a la palabra a adivinar.
         if Intento == palabra:                   #Tambien es la que finaliza el juego
             colorise.cprint("\n!Descubriste la palabra!\n", fg="green")
 
-        elif self.feedback.attempts != 5:
+        elif self.feedback.attempts != 12:
             colorise.cprint("!El juego sigue!\n", fg="blue")
 
             if rol == 1 or rol == 3:
@@ -160,7 +175,6 @@ class Tablero(): #Clase que contiene los procesos de los intentos dentro de la t
         else:
             colorise.cprint("!Fin del juego!\n", fg="blue")
             colorise.cprint(f"La palabra es: {palabra}\n", fg="yellow")
-
 
     def MostrarTablero(self, TableroActual): #Muestra el tablero actulizado.
         for fila in TableroActual: 
@@ -217,12 +231,11 @@ class Roles():  #Metodo que divide los roles de adivinador y creador de la palab
             if self.rol == 2:
                 objtTablero.TablaMaquina(self.rol)
             else:
-                objtTablero.TablaJugador(self.rol) #cosita
+                objtTablero.TablaJugador(self.rol) 
 
     def TableroBase(self, key: int): #Metodo que retorna la base del tablero:
         tablero = [["☻" for _ in range(0,key)] for _ in range(0,12)] 
         return tablero
-
 
     def ValidarPalabra(self, word: str): #validacion de la palabra integrada.
         if word.isalpha() != True:
@@ -230,7 +243,6 @@ class Roles():  #Metodo que divide los roles de adivinador y creador de la palab
             self.Creador()
         else:
             return True
-
 
 def main(): #Funcion donde se establecera el menu y comienzo del juego:
 
@@ -242,19 +254,15 @@ def main(): #Funcion donde se establecera el menu y comienzo del juego:
         if Rol == 1:
             objRol = Roles(nombre=Nombre, rol=Rol)
             objRol.Adivinador() 
-        elif Rol == 2:
+        elif Rol == 2 or Rol == 3:
             objRol = Roles(nombre=Nombre, rol=Rol)
             objRol.Creador() #Diferenciar entre metodos
-        elif Rol == 3:
-            objRol = Roles(nombre=Nombre, rol=Rol)
-            objRol.Creador()
         elif Rol == 4:
-            print("Hasta luego.")
+            print("Hasta luego, vuelva pronto...")
             break
         else:
             print("Opcion invalida...\n")
 
-        
 if __name__ == "__main__":
     main()
 
