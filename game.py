@@ -45,15 +45,16 @@ class Retroalimentacion(Gestion):
     def tabla(self, tabla:list):
         self.__tabla = tabla
 
-    def Feedback(self, palabraDescubrir: str, intento: str):
+    def Feedback(self, palabraDescubrir: str, intento: str): #Metodo que recibe la palabra a buscar y la palabra que ingreso para adivinar.
 
+        #Vuelve la 2 palabras en arrays para poder compararlas luego
         array1 = [_ for _ in intento]
         array2 = [_ for _ in palabraDescubrir]
 
+        #Inicia la comparativa de las palabras y asignando el color correspondiente, usando los codigos ANSI.
         for i in range(len(array1)):
             if array1[i] == array2[i]:
-                # print(f"La letra es {array2[o]} y el indice es {o}")
-                array1[i] = array1[i].replace(array1[i], f"{GREEN}{array1[i]}{RESET}")
+                array1[i] = array1[i].replace(array1[i], f"{GREEN}{array1[i]}{RESET}") #
             for letra in array2:
                 if array1[i] == letra :
                     array1[i] = array1[i].replace(array1[i], f"{YELLOW}{array1[i]}{RESET}")     
@@ -64,20 +65,20 @@ class Retroalimentacion(Gestion):
         return self.tabla
             
 
-    def IntentosPrevios(self):
-        if self.attempts == 5:
+    def IntentosPrevios(self): #Metodo que devuelve el intento o por el contrario, no lo manda, ya que terminaron los intentos.
+        if self.attempts == 12:
             pass     
         else:
             return self.attempts
             
-    def ActualizarDatos(self, TablaModificda):
+    def ActualizarDatos(self, TablaModificada): #Metodo que actualiza los datos, como la nueva tabla y aumento de intentos perdidos.
         self.attempts += 1
-        self.tabla = TablaModificda
+        self.tabla = TablaModificada
 
 
-class Tablero(): #Aqui voy a verificar los ganes y errores
+class Tablero(): #Clase que contiene los procesos de los intentos dentro de la tabla.
 
-    def __init__(self, nombre: str, palabra: str, feedback: Retroalimentacion) -> None:
+    def __init__(self, nombre: str, palabra: str, feedback: Retroalimentacion) -> None: #Metodo constructor
         self.__nombre = nombre
         self.__palabra = palabra
         self.__feedback = feedback
@@ -107,47 +108,45 @@ class Tablero(): #Aqui voy a verificar los ganes y errores
     def palabra(self, palabra:str):
         self.__palabra = palabra
 
-    def generar_palabra_aleatoria(self, lista_palabras):
+    def generar_palabra_aleatoria(self, lista_palabras: list): #Metodo que retorna una palabra random de un array de palabras, que es recibido como parametro.
 
         palabraAleatoria = "a"
-        while len(palabraAleatoria) != len(self.palabra):
+        while len(palabraAleatoria) != len(self.palabra): #Bucle que no permite que retorne una palabra con diferente longitud de la palabra a adivinar.
             palabraAleatoria = random.choice(lista_palabras)
             
         return palabraAleatoria
             
-    
-    def TablaMaquina(self, rol):
+    def TablaMaquina(self, rol: int):
 
-        #while self.feedback.attempts != 5:
-            with open("palabras.txt", "r", encoding="utf-8") as archivo:
-                palabras = [linea.strip() for linea in archivo]
+        #Esto lee todas las lineas del archivo llamado "palabras.txt", y los almacena en un array.
+        with open("palabras.txt", "r", encoding="utf-8") as archivo: 
+            palabras = [linea.strip() for linea in archivo]
             
-            palabra_generada = self.generar_palabra_aleatoria(palabras)
-            NuevaTabla = self.feedback.Feedback(self.palabra, palabra_generada)
+        palabra_generada = self.generar_palabra_aleatoria(palabras)
+        NuevaTabla = self.feedback.Feedback(self.palabra, palabra_generada) #Tabla ya con su retroalimentacion.
 
-            if NuevaTabla != False:
-                self.MostrarTablero(NuevaTabla) #cositas
-                self.WinVerific(palabra_generada, self.palabra, rol) #cositas
+        if NuevaTabla != False:
+            self.MostrarTablero(NuevaTabla) #Se llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
+            self.WinVerific(palabra_generada, self.palabra, rol) 
     
     
-    def TablaJugador(self, rol):
+    def TablaJugador(self, rol:int): #Metodo que pide al usuario imgresar una palabra para usarla como intento.
         palabraElegida = "a"
-        while len(palabraElegida) != len(self.palabra):
+        while len(palabraElegida) != len(self.palabra): #Repite si la longitud de las plabras son diferentes.
             colorise.cprint(f"La palabra tiene {len(self.palabra)} letras.",fg="green")
             palabraElegida = input("¿Con cual palabra va a intentar adivinar?: ").lower().strip()
 
             if len(palabraElegida) != len(self.palabra):
                 colorise.cprint("Fuera del rango de la palabra, ingrese algo valido...\n", fg="red")
 
-        NuevaTabla = self.feedback.Feedback(self.palabra, palabraElegida )
+        NuevaTabla = self.feedback.Feedback(self.palabra, palabraElegida ) #Array ya modificado con su feedback
 
         if NuevaTabla != False:
-            self.MostrarTablero(NuevaTabla) #cositas
-            self.WinVerific(palabraElegida, self.palabra, rol) #cositas
+            self.MostrarTablero(NuevaTabla)  #Se llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
+            self.WinVerific(palabraElegida, self.palabra, rol)
 
-
-    def WinVerific(self, Intento, palabra, rol):
-        if Intento == palabra:
+    def WinVerific(self, Intento, palabra, rol): #Metodo que verifica si la palabra es igual o diferente a la palabra a adivinar.
+        if Intento == palabra:                   #Tambien es la que finaliza el juego
             colorise.cprint("\n!Descubriste la palabra!\n", fg="green")
 
         elif self.feedback.attempts != 5:
@@ -156,27 +155,25 @@ class Tablero(): #Aqui voy a verificar los ganes y errores
             if rol == 1 or rol == 3:
                 self.TablaJugador(rol)
             else:
-                time.sleep(1.5)
+                time.sleep(1)
                 self.TablaMaquina(rol)
         else:
             colorise.cprint("!Fin del juego!\n", fg="blue")
             colorise.cprint(f"La palabra es: {palabra}\n", fg="yellow")
 
 
-    def MostrarTablero(self, TableroActual):
-        for fila in TableroActual: #cositas
+    def MostrarTablero(self, TableroActual): #Muestra el tablero actulizado.
+        for fila in TableroActual: 
             print("", end="     ")
             time.sleep(0.1)
             print("    ".join(fila))
 
-
-class Roles():
+class Roles():  #Metodo que divide los roles de adivinador y creador de la palabra.
     def __init__(self, nombre: str, rol: int) -> None:
         self.__validar_tipo(nombre, str)
         self.__validar_tipo(rol, int)
         self.__nombre = nombre
         self.__rol = rol
-        #self.__reguex = r'^[a-zA-Z]+$' #Esto no se usa.
 
     @property
     def nombre(self):
@@ -198,17 +195,16 @@ class Roles():
         if not isinstance(elemento, tipo):
             raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
     
-    def Adivinador(self):
+    def Adivinador(self): #Metodo donde la palabra impuesta a adivinar va a ser por parte de la computadora.
         palabrasAdivinar = ["casa","celular","cuaderno","maduro","biden","python"]
         chose = random.choice(palabrasAdivinar)
         
         tablero = self.TableroBase(len(chose))
         retro = Retroalimentacion(tablero)
-        objtTablero = Tablero(self.nombre, chose, retro)
+        objtTablero = Tablero(self.nombre, chose, retro) #Se aplica la composicion.
         objtTablero.TablaJugador(self.rol) 
 
-
-    def Creador(self):
+    def Creador(self): #Metodo donde la palabra impuesta a adivinar va a ser por parte del jugador.
         
         print(f"¡Hola {self.__nombre}!")
         print("¿Cual palabra va a adivinar? :")
@@ -223,12 +219,12 @@ class Roles():
             else:
                 objtTablero.TablaJugador(self.rol) #cosita
 
-    def TableroBase(self, key):
-        tablero = [["☻" for _ in range(0,key)] for _ in range(0,5)] 
+    def TableroBase(self, key: int): #Metodo que retorna la base del tablero:
+        tablero = [["☻" for _ in range(0,key)] for _ in range(0,12)] 
         return tablero
 
 
-    def ValidarPalabra(self, word: str):
+    def ValidarPalabra(self, word: str): #validacion de la palabra integrada.
         if word.isalpha() != True:
             colorise.cprint("Palabra invalida. Vuelva a intentar...\n", fg="blue")
             self.Creador()
@@ -236,7 +232,7 @@ class Roles():
             return True
 
 
-def main():
+def main(): #Funcion donde se establecera el menu y comienzo del juego:
 
     Nombre = input("¿Cual es su nombre?: ").strip()
     while True:
@@ -262,60 +258,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-# y = Roles("Andres")
-# y.Adivinador()
-
-
-# matrix = [["☻" for _ in range(0,8)] for _ in range(0,12)]
-
-# for o in matrix:
-#     print("  ".join(o))
-
-tablero = [["☻" for _ in range(0,9)] for _ in range(0,12)]
-nombres = [item.replace("☻", "x") for item in tablero[0]]
-
-
-
-# for p in range(len(tablero[0])):
-#     if p == 0:
-#         tablero[0][p] = tablero[0][p].replace("☻", f"{RED}x{RESET}")
-        
-# for k in tablero:
-#     time.sleep(0.3)
-#     print("  ".join(k))
-
-
-intento = "maripepi"
-palabraDescubrir = "mariposa"
-array1 = [s for s in intento]
-array2 = [a for a in palabraDescubrir]
-
-# for i in range(len(array1)):
-#     if array1[i] == array2[i]:
-#         # print(f"La letra es {array2[o]} y el indice es {o}")
-#         array1[i] =array1[i].replace(array1[i], f"{GREEN}{array1[i]}{RESET}")
-#     for letra in array2:
-#         if array1[i] == letra : #Esa segunda condicion es para que no me sobreescriba lo que esta en verde.
-#             array1[i] =array1[i].replace(array1[i], f"{YELLOW}{array1[i]}{RESET}")
-       
-                    
-# for o in range(len(array1)):
-#     if array1[o] == array2[o]:
-#         print(f"La letra es {array2[o]} y el indice es {o}")
-#listas Anidadas
-
-# for o in range(len(array1)):
-#     if array1[o] == array2[o]:
-#         # print(f"La letra es {array2[o]} y el indice es {o}")
-#         array1[o] =array1[o].replace(array1[o], f"{GREEN}{array1[o]}{RESET}")
-
-
-# for k in tablero:
-#     print("", end="     ")
-#     time.sleep(0.1)
-#     print("    ".join(k))
-
-#strip elimina los espacios al principio y al final.
-
-
+ 
