@@ -1,13 +1,11 @@
 import colorise
 import random
 import time
-#from termcolor import colored
 from abc import ABC, abstractmethod
 
-
-class Gestion(ABC):
+class Gestion(ABC): #Clase con metodos abstractos
     
-    @abstractmethod #Hace que todas las clases que hereden de esta clase OBLIGATORIAMENTE tienen que tener defina este metodo
+    @abstractmethod #Hace que todas las clases que hereden de esta clase obligatoriamente tienen que tener defina este metodo
     def IntentosPrevios(self):
         pass
     
@@ -15,34 +13,50 @@ class Gestion(ABC):
     def ActualizarDatos(self):
         pass
 
-class Retroalimentacion(Gestion):
+class Palabras:
+    def generar_palabra_aleatoria(self, palabra: str, uso: int): #Metodo que retorna una palabra random de un array de palabras, que es recibido como parametro.
+
+        #Esto lee todas las lineas del archivo llamado "palabras.txt", y los almacena en un array.
+        with open("palabras.txt", "r", encoding="utf-8") as archivo: 
+            palabras = [linea.strip() for linea in archivo]
+            
+        if uso == 1:
+            palabraAleatoria = "a"
+            while len(palabraAleatoria) != len(palabra): #Bucle que no permite que retorne una palabra con diferente longitud de la palabra a adivinar.
+                palabraAleatoria = random.choice(palabras)
+            return palabraAleatoria
+        
+        else:
+            Aleatorio = random.choice(palabras)
+            return Aleatorio
+
+class Retroalimentacion(Gestion): #Clase que retorna la tabla ya con su retroalimentacion.
     def __init__(self, tabla: list) -> None:
-        self.__validar_tipo(tabla, list)
         self.__tabla = tabla
         self.__attempts = 0
-        self.__green = "\033[32m"    #Codigos ANSI
+        self.__yellow = '\033[0;33m'  # Códigos de escape ANSI para colores
+        self.__green = "\033[32m"
         self.__reset = "\033[0m"
-        self.__yellow = '\033[0;33m'
 
     @property
     def tabla(self):
         return self.__tabla
     
     @property
-    def attempts(self):
-        return self.__attempts
-
+    def yellow(self):
+        return self.__yellow
+    
     @property
     def green(self):
         return self.__green
     
     @property
-    def yellow(self):
-        return self.__yellow
-    
-    @property
     def reset(self):
         return self.__reset
+    
+    @property
+    def attempts(self):
+        return self.__attempts
     
     @attempts.setter
     def attempts(self, attempts:str):
@@ -51,10 +65,6 @@ class Retroalimentacion(Gestion):
     @tabla.setter
     def tabla(self, tabla:list):
         self.__tabla = tabla
-        
-    def __validar_tipo(self, elemento, tipo): #Valida si es de tipo de dato correcto
-        if not isinstance(elemento, tipo):
-            raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
 
     def Feedback(self, palabraDescubrir: str, intento: str): #Metodo que recibe la palabra a buscar y la palabra que ingreso para adivinar.
 
@@ -65,7 +75,7 @@ class Retroalimentacion(Gestion):
         #Inicia la comparativa de las palabras y asignando el color correspondiente, usando los codigos ANSI.
         for i in range(len(array1)):
             if array1[i] == array2[i]:
-                array1[i] = array1[i].replace(array1[i], f"{self.green}{array1[i]}{self.reset}") #
+                array1[i] = array1[i].replace(array1[i], f"{self.green}{array1[i]}{self.reset}")
             for letra in array2:
                 if array1[i] == letra :
                     array1[i] = array1[i].replace(array1[i], f"{self.yellow}{array1[i]}{self.reset}")     
@@ -85,12 +95,9 @@ class Retroalimentacion(Gestion):
         self.attempts += 1
         self.tabla = TablaModificada
 
-class Tablero(): #Clase que contiene los procesos de los intentos dentro de la tabla.
+class Tablero( Palabras ): #Clase que contiene los procesos de los intentos dentro de la tabla.
 
     def __init__(self, nombre: str, palabra: str, feedback: Retroalimentacion) -> None: #Metodo constructor
-        self.__validar_tipo(nombre, str)
-        self.__validar_tipo(palabra, str)
-        self.__validar_tipo(feedback, Retroalimentacion)
         self.__nombre = nombre
         self.__palabra = palabra
         self.__feedback = feedback
@@ -119,35 +126,19 @@ class Tablero(): #Clase que contiene los procesos de los intentos dentro de la t
     @palabra.setter
     def palabra(self, palabra:str):
         self.__palabra = palabra
-        
-    def __validar_tipo(self, elemento, tipo): #Valida si es de tipo de dato correcto
-        if not isinstance(elemento, tipo):
-            raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
 
-    def generar_palabra_aleatoria(self, lista_palabras: list): #Metodo que retorna una palabra random de un array de palabras, que es recibido como parametro.
-
-        palabraAleatoria = "a"
-        while len(palabraAleatoria) != len(self.palabra): #Bucle que no permite que retorne una palabra con diferente longitud de la palabra a adivinar.
-            palabraAleatoria = random.choice(lista_palabras)
-            
-        return palabraAleatoria
-            
     def TablaMaquina(self, rol: int):
-
-        #Esto lee todas las lineas del archivo llamado "palabras.txt", y los almacena en un array.
-        with open("palabras.txt", "r", encoding="utf-8") as archivo: 
-            palabras = [linea.strip() for linea in archivo]
-            
-        palabra_generada = self.generar_palabra_aleatoria(palabras)
+        
+        palabra_generada = self.generar_palabra_aleatoria(self.palabra, 1)
         NuevaTabla = self.feedback.Feedback(self.palabra, palabra_generada) #Tabla ya con su retroalimentacion.
-
+    
         if NuevaTabla != False:
-            self.MostrarTablero(NuevaTabla) #Se llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
+            self.MostrarTablero(NuevaTabla) #Llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
             self.WinVerific(palabra_generada, self.palabra, rol) 
     
     def TablaJugador(self, rol:int): #Metodo que pide al usuario imgresar una palabra para usarla como intento.
         palabraElegida = "a"
-        while len(palabraElegida) != len(self.palabra): #Se encicla si la longitud de las plabras son diferentes.
+        while len(palabraElegida) != len(self.palabra): #Repite si la longitud de las plabras son diferentes.
             colorise.cprint(f"La palabra tiene {len(self.palabra)} letras.",fg="green")
             palabraElegida = input("¿Con cual palabra va a intentar adivinar?: ").lower().strip()
 
@@ -160,7 +151,7 @@ class Tablero(): #Clase que contiene los procesos de los intentos dentro de la t
             self.MostrarTablero(NuevaTabla)  #Se llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
             self.WinVerific(palabraElegida, self.palabra, rol)
 
-    def WinVerific(self, Intento:int, palabra:str, rol:int): #Metodo que verifica si la palabra es igual o diferente a la palabra a adivinar.
+    def WinVerific(self, Intento, palabra, rol): #Metodo que verifica si la palabra es igual o diferente a la palabra a adivinar.
         if Intento == palabra:                   #Tambien es la que finaliza el juego
             colorise.cprint("\n!Descubriste la palabra!\n", fg="green")
 
@@ -180,9 +171,9 @@ class Tablero(): #Clase que contiene los procesos de los intentos dentro de la t
         for fila in TableroActual: 
             print("", end="     ")
             time.sleep(0.1)
-            print("    ".join(fila))
+            print("   ".join(fila))
 
-class Roles():  #Metodo que divide los roles de adivinador y creador de la palabra.
+class Roles( Palabras ):  #Metodo que divide los roles de adivinador y creador de la palabra.
     def __init__(self, nombre: str, rol: int) -> None:
         self.__validar_tipo(nombre, str)
         self.__validar_tipo(rol, int)
@@ -210,12 +201,11 @@ class Roles():  #Metodo que divide los roles de adivinador y creador de la palab
             raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
     
     def Adivinador(self): #Metodo donde la palabra impuesta a adivinar va a ser por parte de la computadora.
-        palabrasAdivinar = ["casa","celular","cuaderno","maduro","biden","python"]
-        chose = random.choice(palabrasAdivinar)
+        palabrasAdivinar = self.generar_palabra_aleatoria("",2) #LLamo al metodo de la clase 
         
-        tablero = self.TableroBase(len(chose))
+        tablero = self.TableroBase(len(palabrasAdivinar))
         retro = Retroalimentacion(tablero)
-        objtTablero = Tablero(self.nombre, chose, retro) #Se aplica la composicion.
+        objtTablero = Tablero(self.nombre, palabrasAdivinar, retro) #Se aplica la composicion.
         objtTablero.TablaJugador(self.rol) 
 
     def Creador(self): #Metodo donde la palabra impuesta a adivinar va a ser por parte del jugador.
@@ -234,7 +224,7 @@ class Roles():  #Metodo que divide los roles de adivinador y creador de la palab
                 objtTablero.TablaJugador(self.rol) 
 
     def TableroBase(self, key: int): #Metodo que retorna la base del tablero:
-        tablero = [["☻" for _ in range(0,key)] for _ in range(0,12)] 
+        tablero = [["○" for _ in range(0,key)] for _ in range(0,12)] 
         return tablero
 
     def ValidarPalabra(self, word: str): #validacion de la palabra integrada.
@@ -248,7 +238,7 @@ def main(): #Funcion donde se establecera el menu y comienzo del juego:
 
     Nombre = input("¿Cual es su nombre?: ").strip()
     while True:
-        print("\nMenu: \n1: Adivinador.\n2: Creador.\n3: 1vs1.\n4: Salir.")
+        print("\n-Digite el numero que desee: \n1: Adivinador.\n2: Creador.\n3: 1vs1.\n4: Salir.")
         Rol = int(input())
 
         if Rol == 1:
@@ -256,14 +246,12 @@ def main(): #Funcion donde se establecera el menu y comienzo del juego:
             objRol.Adivinador() 
         elif Rol == 2 or Rol == 3:
             objRol = Roles(nombre=Nombre, rol=Rol)
-            objRol.Creador() #Diferenciar entre metodos
+            objRol.Creador() 
         elif Rol == 4:
-            print("Hasta luego, vuelva pronto...")
+            print("Hasta luego.")
             break
         else:
             print("Opcion invalida...\n")
-
+        
 if __name__ == "__main__":
     main()
-
- 
