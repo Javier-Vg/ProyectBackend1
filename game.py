@@ -32,6 +32,7 @@ class Palabras:
 
 class Retroalimentacion(Gestion): #Clase que retorna la tabla ya con su retroalimentacion.
     def __init__(self, tabla: list) -> None:
+        self.__validar_tipo(tabla, list)
         self.__tabla = tabla
         self.__attempts = 0
         self.__yellow = '\033[0;33m'  # Códigos de escape ANSI para colores
@@ -65,6 +66,10 @@ class Retroalimentacion(Gestion): #Clase que retorna la tabla ya con su retroali
     @tabla.setter
     def tabla(self, tabla:list):
         self.__tabla = tabla
+    
+    def __validar_tipo(self, elemento, tipo): #Valida si es de tipo de dato correcto
+        if not isinstance(elemento, tipo):
+            raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
 
     def Feedback(self, palabraDescubrir: str, intento: str): #Metodo que recibe la palabra a buscar y la palabra que ingreso para adivinar.
 
@@ -98,6 +103,9 @@ class Retroalimentacion(Gestion): #Clase que retorna la tabla ya con su retroali
 class Tablero( Palabras ): #Clase que contiene los procesos de los intentos dentro de la tabla.
 
     def __init__(self, nombre: str, palabra: str, feedback: Retroalimentacion) -> None: #Metodo constructor
+        self.__validar_tipo(nombre, str)
+        self.__validar_tipo(palabra, str)
+        self.__validar_tipo(feedback, Retroalimentacion)
         self.__nombre = nombre
         self.__palabra = palabra
         self.__feedback = feedback
@@ -126,6 +134,10 @@ class Tablero( Palabras ): #Clase que contiene los procesos de los intentos dent
     @palabra.setter
     def palabra(self, palabra:str):
         self.__palabra = palabra
+        
+    def __validar_tipo(self, elemento, tipo): #Valida si es de tipo de dato correcto
+        if not isinstance(elemento, tipo):
+            raise TypeError(f"Expected argument to be a {tipo}, got {type(elemento).__name__}")
 
     def TablaMaquina(self, rol: int):
         
@@ -151,7 +163,7 @@ class Tablero( Palabras ): #Clase que contiene los procesos de los intentos dent
             self.MostrarTablero(NuevaTabla)  #Se llama al metodo "MostrarTablero", y se envia por parametro el nuevo tablero.
             self.WinVerific(palabraElegida, self.palabra, rol)
 
-    def WinVerific(self, Intento, palabra, rol): #Metodo que verifica si la palabra es igual o diferente a la palabra a adivinar.
+    def WinVerific(self, Intento: str, palabra: str, rol: int): #Metodo que verifica si la palabra es igual o diferente a la palabra a adivinar.
         if Intento == palabra:                   #Tambien es la que finaliza el juego
             colorise.cprint("\n!Descubriste la palabra!\n", fg="green")
 
@@ -179,7 +191,7 @@ class Roles( Palabras ):  #Metodo que divide los roles de adivinador y creador d
         self.__validar_tipo(rol, int)
         self.__nombre = nombre
         self.__rol = rol
-
+        
     @property
     def nombre(self):
         return self.__nombre
